@@ -4,6 +4,7 @@ import sys
 import argparse
 from LayerUtils import conv_bn_lrelu, bi_recurrence, flatten
 from SysUtils import get_current_time_string, is_Win32, make_dir, ArgParser
+from project_paths import paths, add_data_root_arg
 
 C.cntk_py.set_fixed_random_seed(1)
 
@@ -260,6 +261,7 @@ def process_args():
             self.parser.add_argument("--encoder", type=int, default=self.config["encoder"])
             self.parser.add_argument("--pretrained_model", type=str)
             self.parser.add_argument("--e3clone", action="store_true")
+            add_data_root_arg(self.parser)
             
 
         def parse(self):
@@ -285,6 +287,7 @@ def process_args():
 
             if self.args.e3clone:
                 self.config["e3_clone"] = True
+            self.config["data_root"] = self.args.data_root
 
 
     parser = ThisArgParser()
@@ -302,7 +305,8 @@ def main():
     current_time = get_current_time_string()
     
     # set main directory path
-    data_dir = "../speech_dir"
+    pipeline_paths = paths(config["data_root"])
+    data_dir = str(pipeline_paths["speech_dir"])
 
     # set proper paths
     if config["type"] == "cnn":
@@ -312,7 +316,7 @@ def main():
         train_file = data_dir + "/audio_exp_train.ctf"
         test_file = data_dir + "/audio_exp_test.ctf"
 
-    model_dir = data_dir + "/model_audio2exp_" + current_time
+    model_dir = str(pipeline_paths["models"] / ("model_audio2exp_" + current_time))
     make_dir(model_dir)
     print("directory created")
     
@@ -322,7 +326,7 @@ def main():
     
     if config["encoder"] == 3:
         if not config["pretrained_model"]:
-            config["pretrained_model"] = data_dir + "/model_audio2exp_2019-03-24-21-03.dnn"
+            config["pretrained_model"] = str(pipeline_paths["models"] / "model_audio2exp_2019-03-24-21-03.dnn")
     else:
         config["pretrained_model"] = None
 

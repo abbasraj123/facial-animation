@@ -6,20 +6,25 @@ from pyglet.gl import *
 import ctypes
 from PIL import Image
 import cv2
+import pathlib as plb
+
+
+REPO_ROOT = plb.Path(__file__).resolve().parents[1]
+SHAPES_ROOT = REPO_ROOT / "shapes"
 
 
 def load_processed_baseshapes(filename=""):
     if filename:
         baseshapes = np.load(filename)
     else:
-        baseshapes = np.load("../shapes/baseshapes.npy")
+        baseshapes = np.load(str(SHAPES_ROOT / "baseshapes.npy"))
     return baseshapes
 
 def load_triangles(filename=""):
     if filename:
         triangles = np.load(filename)
     else:
-        triangles = np.load("../shapes/triangles.npy")
+        triangles = np.load(str(SHAPES_ROOT / "triangles.npy"))
     return triangles
 
 
@@ -144,13 +149,14 @@ class Renderer(object):
                                     [10870, 4271, 4451],
                                     [4451, 4271, 4275],
                                     [4451, 4275, 4293] ], dtype=np.int32)
-        ebv = shape[eyebrow_tris].flatten().astype(ctypes.c_float)
-        ebn = normals[eyebrow_tris].flatten().astype(ctypes.c_float)
-        glVertexPointer(3, GL_FLOAT, 0, ebv.ctypes.data)
-        glNormalPointer(GL_FLOAT, 0, ebn.ctypes.data)
+        if eyebrow_tris.max() < shape.shape[0]:
+            ebv = shape[eyebrow_tris].flatten().astype(ctypes.c_float)
+            ebn = normals[eyebrow_tris].flatten().astype(ctypes.c_float)
+            glVertexPointer(3, GL_FLOAT, 0, ebv.ctypes.data)
+            glNormalPointer(GL_FLOAT, 0, ebn.ctypes.data)
 
-        glDisable(GL_DEPTH_TEST)
-        glDrawArrays(GL_TRIANGLES, 0, 24)
+            glDisable(GL_DEPTH_TEST)
+            glDrawArrays(GL_TRIANGLES, 0, 24)
 
         if text:
             #draw text

@@ -1,6 +1,7 @@
 import pathlib as plb
 import csv
 import sys
+from project_paths import paths, parse_data_root, ensure_dirs
 
 def list_all_sequences(root_path):
     root_dir = plb.Path(root_path)
@@ -107,8 +108,11 @@ def convert_all(ctf_train, ctf_test, actors):
 
 
 if __name__ == '__main__':
-    root_path = "../feat_root"
-    ctf_path="../speech_dir"
+    data_root = parse_data_root("Convert RAVDESS feature CSV files to CNTK CTF files")
+    pipeline_paths = paths(data_root)
+    root_path = str(pipeline_paths["features"])
+    ctf_path = str(pipeline_paths["speech_dir"])
+    ensure_dirs(ctf_path)
     actors = list_all_sequences(root_path)
     ctf_train = ctf_path + "/train_1_20_mfcc_0406.ctf"
     ctf_test = ctf_path + "/test_21_24_mfcc_0406.ctf"

@@ -4,6 +4,7 @@ import pathlib as plb
 import librosa
 import csv
 import numpy as np
+from project_paths import paths, parse_data_root, ensure_dirs
 
 
 def write_csv(filename, data):
@@ -71,46 +72,45 @@ def extract_one_file(videofile, audiofile):
 
     return (mfccs, melspecs, chromas)
 
-video_root = "../video"
-audio_root = "../speech"
-feat_root ="../feat_new"
-
-def process_all():
+def process_all(video_root, audio_root, feat_root):
     video_dir = plb.Path(video_root)
     feat_dir = plb.Path(feat_root)
-    feat_dir.mkdir(parents=True, exist_ok=True)
+    ensure_dirs(feat_dir)
     for actor in video_dir.iterdir():
-        for video_file in actor.iterdir():
-            if video_file.name[len(video_file.name)-4:] != '.mp4' or video_file.name[0:2] != '01':
+        if actor.is_file() and actor.suffix.lower() == ".mp4":
+            video_files = [actor]
+            actor_name = "default"
+        elif actor.is_dir():
+            video_files = list(actor.iterdir())
+            actor_name = actor.name
+        else:
+            continue
+        for video_file in video_files:
+            if video_file.suffix.lower() != '.mp4' or video_file.name[0:2] != '01':
                 continue 
-            ar_dir=  plb.Path(feat_root + "/" + actor.name)
-            if not ar_dir.exists():
-                try:
-                    ar_dir.mkdir()
-                except FileExistsError:
-                    print ("Directory " + actor.name + "  existed")
+            ar_dir = plb.Path(feat_root) / actor_name
+            ensure_dirs(ar_dir)
                     
-            seq_dir = plb.Path( feat_root + "/" + actor.name + "/" + video_file.stem )
+            seq_dir = ar_dir / video_file.stem
             if seq_dir.exists():
                 continue     
-            try:
-                seq_dir.mkdir()
-            except FileExistsError:
-                print ("feat Root Directory existed")
-            except FileNotFoundError:
-                print ("Parent directory not found")    
+            ensure_dirs(seq_dir)
             video_path = str(video_file)
-            audio_path = audio_root + "/" + actor.name + "/" + video_file.stem + ".wav"
+            audio_path = str(plb.Path(audio_root) / actor_name / (video_file.stem + ".wav"))
+            if actor_name == "default" and not plb.Path(audio_path).exists():
+                audio_path = str(plb.Path(audio_root) / (video_file.stem + ".wav"))
             mfccs, melspecs, chromas = extract_one_file(video_path, audio_path)
-            mfcc_path = feat_root + "/" + actor.name + "/" + video_file.stem + "/mfcc_2.csv"
-            mel_path = feat_root + "/" + actor.name + "/" + video_file.stem + "/log_mel.csv"
-            chroma_path = feat_root + "/" + actor.name + "/" + video_file.stem + "/chroma_cqt.csv"
+            mfcc_path = str(seq_dir / "mfcc_2.csv")
+            mel_path = str(seq_dir / "log_mel.csv")
+            chroma_path = str(seq_dir / "chroma_cqt.csv")
             write_csv(mfcc_path, mfccs)
             write_csv(mel_path, melspecs)
             write_csv(chroma_path, chromas)
 
 if __name__ == "__main__":
-    process_all()
+    data_root = parse_data_root("Extract MFCC, mel, and chroma audio features")
+    pipeline_paths = paths(data_root)
+    process_all(pipeline_paths["video"], pipeline_paths["speech"], pipeline_paths["features"])
        
         
     

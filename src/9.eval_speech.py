@@ -4,6 +4,7 @@ import cv2
 from scipy.signal import medfilt
 from SysUtils import make_dir, get_items
 import pathlib as plb
+from project_paths import paths, parse_data_root, ensure_dirs
 
 def load_image(path):
     img = cv2.imread(path, 1)
@@ -60,6 +61,7 @@ def estimate_one_audio_seq(model, audio_seq, small_mem=False):
 def visualize_one_audio_seq(model, video_frame_list, audio_csv_file, exp_npy_file, save_dir):
     if isinstance(model, str):
         model = C.load_model(model)
+    make_dir(save_dir)
     # evaluate model with given audio data
     audio = np.loadtxt(audio_csv_file, dtype=np.float32, delimiter=",")
     audio_seq = np.reshape(audio, (audio.shape[0], 1, 128, 32))
@@ -76,10 +78,12 @@ def visualize_one_audio_seq(model, video_frame_list, audio_csv_file, exp_npy_fil
         raise ValueError("number of true labels and number of outputs do not match")
     
     # create directory to store output frames
+    video = None
     if video_frame_list:
         video = load_image_stack(video_frame_list)
         if video.shape[0] != e_real.shape[0]:
             print("number of frames and number of labels do not match. Not using video")
+            video = None
 
     lf=[]
     lr=[]
@@ -103,44 +107,48 @@ def visualize_one_audio_seq(model, video_frame_list, audio_csv_file, exp_npy_fil
 def make_dirs(video_root,save_root):
     vr_dir = plb.Path(video_root)
     ar_dir = plb.Path(save_root)
-    try:
-        ar_dir.mkdir()
-    except FileExistsError:
-        print ("Audio Root Directory existed")
-    except FileNotFoundError:
-        print ("Parent directory not found")
+    ensure_dirs(ar_dir)
     for actor in vr_dir.iterdir():
-        if actor.is_dir():
-            try:
-                seq_path=plb.Path(save_root + "/" + actor.name).mkdir() 
-            except FileExistsError:
-                print ("Directory " + actor.name + "  existed")
+        if not actor.is_dir():
+            continue
+        ensure_dirs(ar_dir / actor.name)
         for frame_folder in actor.iterdir():
-            try:
-                plb.Path(save_root + "/" + actor.name + "/" + frame_folder.name).mkdir() 
-            except FileExistsError:
-                print ("Directory " + actor.name + "  existed")
+            if frame_folder.is_dir():
+                ensure_dirs(ar_dir / actor.name / frame_folder.name)
             
-def test_one_seq():
+def test_one_seq(data_root=None):
     # directory to store output video. It will be created if it doesn't exist
-    save_dir = "../speech_dir/output_folder"
-    model_file = "../speech_dir/model_audio2exp_2019-03-24-21-03/model_audio2exp_2019-03-24-21-03.dnn"
+    pipeline_paths = paths(data_root)
+    save_dir = str(pipeline_paths["outputs"] / "npy_output")
+    model_file = str(pipeline_paths["models"] / "model_audio2exp_2019-03-24-21-03.dnn")
+    if not plb.Path(model_file).exists():
+        model_file = str(plb.Path(__file__).resolve().parents[1] / "Outputs" / "model_audio2exp_2019-03-24-21-03" / "model_audio2exp_2019-03-24-21-03.dnn")
     # video directory holding separate frames of the video. Each image should be square.
-    video_direct = "../FrontalFaceData"
+    video_direct = str(pipeline_paths["frontal_faces"])
     # spectrogram sequence is stored in a .csv file
-    audio_dir = "../speech_dir/RAVDESS_feat"
+    audio_dir = pipeline_paths["speech_dir"] / "RAVDESS_feat"
+    if not audio_dir.exists():
+        audio_dir = pipeline_paths["features"]
     # AU labels are stored in an .npy file
-    exp_dir = "../ExpLabels"
+    exp_dir = pipeline_paths["exp_labels"] / "RAVDESS"
+    if not exp_dir.exists():
+        exp_dir = pipeline_paths["exp_labels"]
     
     make_dirs(video_direct,save_dir)
     video_dir=plb.Path(video_direct)
-    for actor in video_dir.iterdir():    
+    for actor in video_dir.iterdir():
+        if not actor.is_dir():
+            continue
         for frame_list in actor.iterdir():
+            if not frame_list.is_dir():
+                continue
             try:
-                video_path=plb.Path(video_direct + "/" + actor.name + "/" + frame_list.name)
-                audio_path = plb.Path(audio_dir + "/" + actor.name + "/" + frame_list.name + "/dbspectrogram.csv")
-                save_path=save_dir + "/" + actor.name + "/" + frame_list.name
-                exp_path=plb.Path(exp_dir + "/" + actor.name + "/" + frame_list.stem + ".npy")
+                video_path = plb.Path(video_direct) / actor.name / frame_list.name
+                audio_path = plb.Path(audio_dir) / actor.name / frame_list.name / "dbspectrogram.csv"
+                save_path = str(plb.Path(save_dir) / actor.name / frame_list.name)
+                exp_path = plb.Path(exp_dir) / actor.name / (frame_list.stem + ".npy")
+                if not exp_path.exists():
+                    exp_path = plb.Path(exp_dir) / (frame_list.stem + ".npy")
                 video_path=str(video_path)
             except FileNotFoundError:
                 print("doesn't exit")
@@ -154,5 +162,6 @@ def test_one_seq():
     
     
 if __name__ == "__main__":
-    test_one_seq()
+    data_root = parse_data_root("Evaluate speech features with a trained CNTK model")
+    test_one_seq(data_root)
     

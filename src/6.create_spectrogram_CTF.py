@@ -1,6 +1,7 @@
 import numpy as np
 import pathlib as plb
 from SysUtils import get_items, make_dir, get_path
+from project_paths import paths, parse_data_root, ensure_dirs
 
 def convert_vector_to_string(np_vec):
     a = list(np_vec)
@@ -122,8 +123,11 @@ def create_ctf_file_noseq(seq_root, exp_root, output_file, is_training=True):
     
 
 def main():
-    seq_root = "../speech_dir"
-    exp_root = "../ExpLabels"
+    data_root = parse_data_root("Create CNTK CTF files from spectrograms and expression labels")
+    pipeline_paths = paths(data_root)
+    seq_root = str(pipeline_paths["speech_dir"])
+    exp_root = str(pipeline_paths["exp_labels"])
+    ensure_dirs(seq_root)
 
     # create CTF data to train CNN
     ctf_train = seq_root + "/audio_exp_train_noseq.ctf"
