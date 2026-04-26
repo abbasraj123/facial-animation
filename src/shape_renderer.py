@@ -209,6 +209,14 @@ if __name__ == "__main__":
         help="Adds speech-energy-driven motion to jaw/lip channels during rendering only.",
     )
     parser.add_argument("--only-video", default=None, help="Render only the output for this .mp4 filename")
+    parser.add_argument("--only-media", default=None, help="Render only the output for this video or audio filename")
+    parser.add_argument("--only-audio", default=None, help="Render only the output for this audio filename")
     args = parser.parse_args()
-    process_all(args.data_root, args.expression_scale, args.mouth_scale, args.audio_mouth_strength, args.only_video)
+    process_all(
+        args.data_root,
+        args.expression_scale,
+        args.mouth_scale,
+        args.audio_mouth_strength,
+        args.only_media or args.only_audio or args.only_video,
+    )
     

@@ -10,6 +10,9 @@ from tkinter import filedialog, messagebox, ttk
 from project_paths import paths, get_data_root, ensure_dirs
 
 
+SUPPORTED_MEDIA_EXTENSIONS = [".mp4", ".wav", ".mp3", ".m4a", ".aac", ".flac", ".ogg"]
+
+
 class FacialAnimationApp(tk.Tk):
     def __init__(self):
         super().__init__()
@@ -67,7 +70,7 @@ class FacialAnimationApp(tk.Tk):
         ttk.Label(header, text="Speech-Driven Facial Animation Studio", style="Header.TLabel").pack(anchor=tk.W, padx=26, pady=(18, 2))
         ttk.Label(
             header,
-            text="Select a video, tune lip motion, and export comparison plus 3D rendered animation",
+            text="Select video or audio, tune lip motion, and export comparison plus 3D rendered animation",
             style="HeaderSub.TLabel",
         ).pack(anchor=tk.W, padx=26)
 
@@ -94,8 +97,8 @@ class FacialAnimationApp(tk.Tk):
         card.grid(row=0, column=0, sticky=tk.EW, padx=(0, 10), pady=(0, 12))
         card.columnconfigure(0, weight=1)
 
-        ttk.Label(card, text="1. Select Input Video", style="Title.TLabel").grid(row=0, column=0, sticky=tk.W, pady=(0, 8))
-        ttk.Label(card, text="Choose an MP4 file. The app copies external files into data/ before processing.", style="Muted.TLabel").grid(
+        ttk.Label(card, text="1. Select Input Media", style="Title.TLabel").grid(row=0, column=0, sticky=tk.W, pady=(0, 8))
+        ttk.Label(card, text="Choose a video or audio file. External files are copied into data/ before processing.", style="Muted.TLabel").grid(
             row=1, column=0, sticky=tk.W, pady=(0, 10)
         )
 
@@ -234,8 +237,13 @@ class FacialAnimationApp(tk.Tk):
 
     def browse_video(self):
         path = filedialog.askopenfilename(
-            title="Select video file",
-            filetypes=[("MP4 video", "*.mp4"), ("All files", "*.*")],
+            title="Select video or audio file",
+            filetypes=[
+                ("Media files", "*.mp4 *.wav *.mp3 *.m4a *.aac *.flac *.ogg"),
+                ("Video files", "*.mp4"),
+                ("Audio files", "*.wav *.mp3 *.m4a *.aac *.flac *.ogg"),
+                ("All files", "*.*"),
+            ],
         )
         if path:
             self.selected_video.set(path)
@@ -260,8 +268,8 @@ class FacialAnimationApp(tk.Tk):
 
     def start_run(self):
         video = plb.Path(self.selected_video.get().strip('"'))
-        if not video.exists() or video.suffix.lower() != ".mp4":
-            messagebox.showerror("Invalid video", "Please select a valid .mp4 video file.")
+        if not video.exists() or video.suffix.lower() not in SUPPORTED_MEDIA_EXTENSIONS:
+            messagebox.showerror("Invalid media", "Please select a valid video or audio file.")
             return
 
         self.set_running(True)
@@ -293,13 +301,13 @@ class FacialAnimationApp(tk.Tk):
                     "Running pretrained inference...",
                     10,
                     55,
-                    [sys.executable, str(self.repo_root / "src" / "infer_pretrained.py"), "--data-root", str(self.data_root), "--only-video", source_video.name],
+                    [sys.executable, str(self.repo_root / "src" / "infer_pretrained.py"), "--data-root", str(self.data_root), "--only-media", source_video.name],
                 ),
                 (
                     "Rendering comparison and 3D videos...",
                     60,
                     95,
-                    [sys.executable, str(self.repo_root / "src" / "shape_renderer.py"), "--data-root", str(self.data_root), "--only-video", source_video.name],
+                    [sys.executable, str(self.repo_root / "src" / "shape_renderer.py"), "--data-root", str(self.data_root), "--only-media", source_video.name],
                 ),
             ]
 

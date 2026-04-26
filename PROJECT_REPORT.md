@@ -6,11 +6,11 @@
 
 ## 2. Project Overview
 
-This project generates a 3D facial animation from speech. The system accepts a video file as input, extracts the audio, converts the audio into spectrogram features, predicts facial expression coefficients using a pretrained deep learning model, and renders the predicted expression sequence on a 3D face mesh.
+This project generates a 3D facial animation from speech. The system accepts a video or audio file as input, extracts or converts the audio, converts the audio into spectrogram features, predicts facial expression coefficients using a pretrained deep learning model, and renders the predicted expression sequence on a 3D face mesh.
 
 The core idea is that speech contains information about mouth movement, speaking rhythm, and emotional intensity. A neural network can learn a mapping from speech features to facial expression parameters. These parameters can then be used to animate a 3D face model.
 
-The current implementation supports pretrained inference without requiring the full RAVDESS dataset. A user can select a video, run inference, and obtain rendered output videos.
+The current implementation supports pretrained inference without requiring the full RAVDESS dataset. A user can select a video or audio file, run inference, and obtain rendered output videos.
 
 ## 3. Problem Statement
 
@@ -24,7 +24,7 @@ Given speech audio, predict facial expression/blendshape values that can animate
 
 The final system should:
 
-- accept a normal video input,
+- accept a normal video or audio input,
 - extract speech audio,
 - predict facial expression movement,
 - render a 3D face animation,
@@ -100,11 +100,11 @@ A new inference script was added:
 src/infer_pretrained.py
 ```
 
-This allows the system to run on a normal `.mp4` video without requiring RAVDESS expression labels.
+This allows the system to run on a normal `.mp4` video or standalone audio file without requiring RAVDESS expression labels.
 
 The script:
 
-- finds the input video,
+- finds the input video/audio file,
 - extracts audio,
 - creates spectrogram features,
 - loads the pretrained CNTK model,
@@ -285,7 +285,7 @@ Desktop interface for non-technical users.
 
 Features:
 
-- video selection,
+- video/audio selection,
 - render tuning sliders,
 - processing progress,
 - log panel,
@@ -322,10 +322,10 @@ This means the model predicts 46 facial expression/blendshape coefficients per t
 The current system takes:
 
 ```text
-.mp4 video file
+.mp4 video file or audio file
 ```
 
-The video is used for:
+For video input, the video is used for:
 
 - extracting audio,
 - showing original frames in the comparison output.
@@ -335,6 +335,8 @@ The deep learning model itself uses only:
 ```text
 audio-derived spectrogram features
 ```
+
+For audio-only input, the system skips original video frame extraction and renders the 3D animation directly from the audio.
 
 ### Output
 
@@ -515,7 +517,11 @@ The model input is not the full video. The model receives audio-derived spectrog
 
 The video is used as a convenient container. The system extracts audio from it for prediction and also extracts frames for the comparison output. The model prediction itself is based on audio.
 
-### Q4. What is the model output?
+### Q4. Can the system work with audio only?
+
+Yes. Audio-only support was added. The system accepts formats such as `.wav`, `.mp3`, `.m4a`, `.aac`, `.flac`, and `.ogg`, converts them to WAV when needed, predicts expression coefficients, and exports a 3D face animation with the audio attached.
+
+### Q5. What is the model output?
 
 The model outputs 46 expression or blendshape coefficients per time step. These values control the 3D face animation.
 

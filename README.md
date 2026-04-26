@@ -2,13 +2,13 @@
 
 This project generates a simple 3D facial animation from speech audio. It uses a pretrained CNTK model to map speech spectrogram features to 46 facial expression/blendshape coefficients, then renders those coefficients on a 3D face mesh.
 
-The current repo supports inference without downloading the full RAVDESS dataset. You can place an `.mp4` file in `data/`, run the pretrained model, and export rendered videos with audio.
+The current repo supports inference without downloading the full RAVDESS dataset. You can place an `.mp4` video or audio file in `data/`, run the pretrained model, and export rendered videos with audio.
 
 ## What This Project Does
 
 The pipeline has four main parts:
 
-1. Extract audio from an input video.
+1. Extract or convert audio from an input video/audio file.
 2. Convert speech audio into dB spectrogram features.
 3. Use the pretrained CNTK model to predict facial expression coefficients.
 4. Render the predicted coefficients onto a 3D face and export videos.
@@ -79,7 +79,7 @@ Notes:
 
 ## Data Layout
 
-For pretrained inference, the easiest option is to put videos directly inside:
+For pretrained inference, the easiest option is to put videos or audio files directly inside:
 
 ```text
 data/
@@ -90,6 +90,7 @@ Example:
 ```text
 data/
   Recording 2026-04-26 151734.mp4
+  speech_sample.wav
 ```
 
 The pipeline will generate folders like:
@@ -114,7 +115,7 @@ cd C:\Users\Rajpur\Desktop\proj\Speech-driven-facial-animation
 conda activate facial-animation
 ```
 
-Run all videos in `data/`:
+Run all media files in `data/`:
 
 ```powershell
 python src/run_pipeline.py --data-root data --stages infer render
@@ -125,6 +126,19 @@ Run one specific video only:
 ```powershell
 python src\infer_pretrained.py --data-root data --only-video "Recording 2026-04-26 151734.mp4"
 python src\shape_renderer.py --data-root data --only-video "Recording 2026-04-26 151734.mp4"
+```
+
+Run one specific audio file only:
+
+```powershell
+python src\infer_pretrained.py --data-root data --only-media "speech_sample.wav"
+python src\shape_renderer.py --data-root data --only-media "speech_sample.wav"
+```
+
+Supported audio formats:
+
+```text
+.wav, .mp3, .m4a, .aac, .flac, .ogg
 ```
 
 ## Run With Desktop UI
@@ -138,7 +152,7 @@ python src\ui_app.py
 The UI lets you:
 
 ```text
-select an .mp4 file
+select an .mp4 or audio file
 tune expression/lip movement values
 run pretrained inference and rendering
 watch progress and logs
@@ -146,7 +160,7 @@ open the generated comparison video
 open the generated 3D-only video
 ```
 
-If the selected video is outside `data/`, the UI copies it into `data/` before processing.
+If the selected media file is outside `data/`, the UI copies it into `data/` before processing.
 
 ## Output Locations
 
