@@ -127,6 +127,27 @@ python src\infer_pretrained.py --data-root data --only-video "Recording 2026-04-
 python src\shape_renderer.py --data-root data --only-video "Recording 2026-04-26 151734.mp4"
 ```
 
+## Run With Desktop UI
+
+You can also use the Tkinter UI:
+
+```powershell
+python src\ui_app.py
+```
+
+The UI lets you:
+
+```text
+select an .mp4 file
+tune expression/lip movement values
+run pretrained inference and rendering
+watch progress and logs
+open the generated comparison video
+open the generated 3D-only video
+```
+
+If the selected video is outside `data/`, the UI copies it into `data/` before processing.
+
 ## Output Locations
 
 Full 3D-only videos:
